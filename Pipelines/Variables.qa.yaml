@@ -1,0 +1,29 @@
+# -----------------------------------------------------------------------------
+# .SYNOPSIS
+#   This is the pipeline variables template yaml for the dev environment.
+# .DESCRIPTION
+#   This pipeline contains all common variables referenced in main pipeline.
+
+# .ASSUMPTIONS:
+#     1. You are referencing this template from an ado pipeline
+#        under the variables object.
+
+# .NOTES
+#     File Name      : Variables.qa.yaml
+#     Prerequisite   : ADO Multi-Stage Yaml Pipeline
+
+# General Variables ----------
+
+# .VARIABLE motsId
+#   Application MOTS ID used in Variables.yaml
+# .VARIABLE serviceConnectionApp
+#   Name of the service connection for the application subscription
+# -----------------------------------------------------------------------------
+
+variables:
+  - name: motsId
+    value: "msft"
+
+# Service Connection variables
+  - name: serviceConnectionApp
+    value: DevOps-Patterns-Base-Infrastructure-SPN # <--- CHANGE TO DEVOPS SERVICE CONNECTION

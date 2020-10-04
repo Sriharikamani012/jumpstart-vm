@@ -1,0 +1,100 @@
+{
+    "variables": {
+  
+      "client_id": "",
+      "client_secret": "",
+      "tenant_id": "",
+      "subscription_id": "",
+  
+      "base_sig_subid": "46d0acae-94eb-48b3-9ce7-e26eb3ee72a5",
+      "base_sig_rg": "att-golden-images",
+      "base_sig": "ATT_Shared_Images",
+      "base_sig_definition": "Centos-7",
+      "base_sig_version": "1.0.0",
+  
+      "dest_sig_rg": "vptower-shared-rg",
+      "dest_sig": "sigvptower001",
+      "dest_sig_definition": "todo_app",
+      "dest_sig_version": "3.0.0",
+      "location": "East US",
+      
+      "zip_path": "../TodoApp.zip",
+  
+      "virtual_network_resource_group_name": "vptower-base-rg",
+      "virtual_network_name": "vptower001-vnet",
+      "virtual_network_subnet_name": "packer-image-builder-sn01",
+      "managed_image_resource_group_name": "vptower-shared-rg",
+  
+      "os_type": "Linux",
+      "vm_size": "Standard_DS2_v2"
+    },
+    "sensitive-variables": ["client_id", "client_secret"],
+    "builders": [
+    {
+      "type": "azure-arm",
+  
+      "client_id": "{{user `client_id`}}",
+      "client_secret": "{{user `client_secret`}}",
+      "tenant_id": "{{user `tenant_id`}}",
+      "subscription_id": "{{user `subscription_id`}}",
+  
+      "shared_image_gallery": {
+        "subscription": "{{user `base_sig_subid`}}",
+        "resource_group": "{{user `base_sig_rg`}}",
+        "gallery_name": "{{user `base_sig`}}",
+        "image_name": "{{user `base_sig_definition`}}",
+        "image_version": "{{user `base_sig_version`}}"
+      },
+  
+      "shared_image_gallery_destination": {
+        "resource_group": "{{user `dest_sig_rg`}}",
+        "gallery_name": "{{user `dest_sig`}}",
+        "image_name": "{{user `dest_sig_definition`}}",
+        "image_version": "{{user `dest_sig_version`}}",
+        "replication_regions": ["{{user `location`}}"]
+    },
+  
+    "virtual_network_resource_group_name": "{{user `virtual_network_resource_group_name`}}",
+    "virtual_network_name": "{{user `virtual_network_name`}}",
+    "virtual_network_subnet_name": "{{user `virtual_network_subnet_name`}}",
+  
+  
+    "managed_image_resource_group_name": "{{user `managed_image_resource_group_name`}}",
+    "managed_image_name": "temp{{user `dest_sig_definition`}}{{user `dest_sig_version`}}",
+  
+    "async_resourcegroup_delete": true,
+  
+      "os_type": "{{user `os_type`}}",
+      "location": "{{user `location`}}",
+      "vm_size": "{{user `vm_size`}}"
+  
+    }
+  ],
+    "provisioners": [
+        {
+            "type": "file",
+            "source": "{{user `zip_path`}}",
+            "destination": "/tmp/TodoApp.zip"
+        },
+      {
+        "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+        "inline_shebang": "/bin/sh -x",
+        "type": "shell",
+        "inline": [
+          "yum install -y java-1.8.0-openjdk-devel.x86_64",
+  
+        "export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.242.b08-1.el7.x86_64/'",
+          "firewall-cmd --zone=public --add-port=8080/tcp --permanent",
+          "firewall-cmd --reload",
+          "cd /tmp/",
+          "unzip /tmp/TodoApp.zip",
+          "mv /tmp/TodoApp/todo.service /usr/lib/systemd/system/todo.service",
+          "mkdir -p /opt/TodoApp",
+          "mv /tmp/TodoApp/TodoDemo-0.0.1-SNAPSHOT.war /opt/TodoApp/",
+  
+  
+          "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+        ]
+      }
+    ]
+  }

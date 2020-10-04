@@ -1,0 +1,120 @@
+# -----------------------------------------------------------------------------
+# VARAIBLE_NAMING_CONVENTION
+#   sig = shared image gallery
+#   rg = resource group
+#   dest = destination
+#   sa = storage account
+#   ci = continous integration
+
+# General Variables ---
+
+# .VARIABLE LOCATION
+#   Location of the Azure Resources
+# .VARIABLE serviceConnectionSIG
+#   This the service connection that has "Storage Blob Data Reader" to the CI IaaS
+#   Blob Storage Account in DevOps Services. It also has contributor access to the 
+#   Shared Image Gallery in DevOps Services.
+# .VARIABLE agent_pool
+#   This is the name of the agent pool. This agent pool should be a self-hosted agent
+#   in the DevOps Services
+
+# Image Builder Variables ----
+
+# .VARIABLE base_sig
+#   The base shared image gallery name where the vanilla image exists
+# .VARIABLE base_sig_rg
+#   The base shared image gallery resource group name where the vanilla image exists
+# .VARIABLE base_sig_subid
+#   The base shared image gallery's subscription id where the vanilla image exists
+# .VARIABLE base_sig_definition
+#   The base shared image definition where the vanilla image exists
+# .VARIABLE base_sig_version
+#   The base shared image definition's version where the vanilla image exists
+
+# DevOps Services Variables ----
+
+# .VARIABLE ci_sa_name
+#   The ci storage account name in DevOps services
+# .VARIABLE dest_sig_rg
+#   The destination shared image gallery resource group in DevOps services
+# .VARIABLE dest_sig
+#   The destination shared image gallery in DevOps services
+# .VARIABLE vp_base_rg
+#   The base resource group in DevOps services. This rg will contain the virtual network
+# .VARIABLE vp_vnet
+#   The virtual network in DevOps services
+# .VARIABLE vp_packer_subnet
+#   The subnet in DevOps services to deploy the temporary packer vm provioner
+# .VARIABLE vp_packer_rg
+#   The resource group to place the custom image in DevOps services
+
+# TodoApp Variables ---
+
+# .VARIABLE todoapp_dest_sig_definition
+#   The image definition name to create on the destination SIG
+# .VARIABLE todoapp_dest_sig_version
+#   The destination version in the shared image gallery in DevOps services for TodoApp.
+#   To update the version image, you should manually update this variable to an
+#   incremental version using https://semver.org/. This variable should change
+#   everytime the todoapp_blob artifact is updated
+# .VARIABLE todoapp_blob
+#   The name of the blob that hosts TodoApp's zip file
+# .VARIABLE todoapp_folder_def
+#   The folder name that the Packer definition resides for TodoApp (ex. TodoApp)
+# .VARIABLE todoapp_packer_def
+#   Name of the packer json for TodoApp (ex. Packer.json)
+# .VARIABLE todoapp_container_name
+#   The name of the container that hosts TodoApp's blob
+# -----------------------------------------------------------------------------
+variables:
+ # general variables
+  - name: LOCATION
+    value: eastus2
+  - name: serviceConnectionSIG
+    value: DevOps-Patterns-Base-Infrastructure-SPN # <--- CHANGE TO YOUR ADO SPN WITH ACCESS TO YOUR SUBSCRIPTION
+  - name: agent_pool
+    value: custom_vmss # <--- CHANGE TO YOUR ADO AGENT POOL NAME
+
+  # image builder variables ---------------------------------------------------
+  - name: base_sig
+    value: ATT_Shared_Images
+  - name: base_sig_rg
+    value: att-golden-images
+  - name: base_sig_subid
+    value: 9e9d8a58-6c9b-4cdb-8a7b-6450e36a6f51 # <--- CHANGE TO CUSTOMER SUBSCRIPTION ID
+  - name: base_sig_definition
+    value: Ubuntu-18 #RHEL-7 <--- CHANGE TO YOUR SOURCE IMAGE DEFINITION
+  - name: base_sig_version
+    value: 0.0.1
+
+# DevOps Services variables ------------------------------------------
+  - name: ci_sa_name
+    value: $(motsId)devopsstdgatt001 # <--- ENSURE $motsId IS SET IN VARIABLES.ENV.YAML TO WHAT WAS PROVISIONED IN "DevOps Services"
+  - name: dest_sig_rg
+    value: $(motsId)-eastus2-devops-rg
+  - name: dest_sig
+    value: $(motsId)devopssig
+
+# Packer Supplemental Resources
+  - name: vp_base_rg
+    value: ADO-BASE-INFRASTRUCTURE #$(motsId)-eastus2-devops-rg # <--- ENSURE $motsId IS SET IN VARIABLES.ENV.YAML TO WHAT WAS PROVISIONED IN "DevOps Services"
+  - name: vp_vnet
+    value: ADOBaseInfrastructurevnet649 #eastus2-$(motsId)-devops-vnet # <--- ENSURE $motsId IS SET IN VARIABLES.ENV.YAML TO WHAT WAS PROVISIONED IN "DevOps Services"
+  - name: vp_packer_subnet
+    value: default #eastus2-$(motsId)-devops-vnet-packer-snet <--- ENSURE $motsId IS SET IN VARIABLES.ENV.YAML TO WHAT WAS PROVISIONED IN "DevOps Services"
+  - name: vp_packer_rg
+    value: $(motsId)-eastus2-devops-rg # <--- ENSURE $motsId IS SET IN VARIABLES.ENV.YAML TO WHAT WAS PROVISIONED IN "DevOps Services"
+
+# TodoApp Values < -- SAMPLE APPLICATION FOR IMAGE BUILDER
+  - name: todoapp_dest_sig_definition
+    value: 'todo_app_05_05' 
+  - name: todoapp_dest_sig_version
+    value: '1.0.11'
+  - name: todoapp_blob
+    value: '0123-TodoApp-v1.0.0.zip' # <--- CHANGE TO BLOB NAME ON THE STORAGE ACCOUNT CONTAINER
+  - name: todoapp_folder_def
+    value: 'TodoApp'
+  - name: todoapp_packer_def
+    value: 'Packer.json'
+  - name: todoapp_container_name
+    value: 'todoapp'  # <--- CHANGE TO CONTAINER NAME ON THE STORAGE ACCOUNT

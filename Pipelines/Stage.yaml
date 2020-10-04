@@ -1,0 +1,63 @@
+parameters:
+- name: environment
+  type: string
+  displayName: 'The environment name'
+
+- name: serviceConnectionApp
+  type: string
+  displayName: 'The Service Connection to run Terraform'
+
+- name: serviceConnectionSIG
+  type: string
+  displayName: 'The service connection that has contributor access to the SIG definition'
+
+- name: tf_variable_name
+  type: string
+  displayName: 'The name of terraform variable'
+
+- name: dest_sig_rg
+  type: string
+  displayName: 'The destination shared image gallery resource group in DevOps services'
+
+- name: dest_sig
+  type: string
+  displayName: 'The destination shared image gallery in DevOps services'
+
+- name: dest_sig_definition
+  type: string
+  displayName: 'The destination definition in the shared image gallery in DevOps services'
+
+- name: dest_sig_version
+  type: string
+  displayName: 'The destination version in the shared image gallery in DevOps services'
+
+- name: dependsOn
+  type: string
+  displayName: 'The components this job depends on like another job'
+  default: ''
+
+jobs:
+- deployment: ${{ parameters.environment }}
+  dependsOn: ${{ parameters.dependsOn }}
+  displayName: Deploy
+  environment: ${{ parameters.environment }}
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - checkout: self
+        - checkout: common-library
+        - template: PipelineTemplates/ImageBuilder/GetImageId.yaml@common-library
+          parameters:
+            serviceConnection: $(serviceConnectionSIG)
+            tf_variable_name: 'linux_image_id'
+            dest_sig_rg: $(dest_sig_rg)
+            dest_sig: $(dest_sig)
+
+            dest_sig_definition: $(todoapp_dest_sig_definition)
+            dest_sig_version: $(todoapp_dest_sig_version)
+            
+        - template: PipelineTemplates/Terraform/Terraform.yaml@common-library
+          parameters:
+            serviceConnectionApp: ${{ parameters.serviceConnectionApp }}
+            environment: ${{ parameters.environment }}
